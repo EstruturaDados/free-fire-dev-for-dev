@@ -1,13 +1,13 @@
 /*
  * ---------------------------------------------------------------------
- * Desafio Código da Ilha – Edição Free Fire (NÍVEL NOVATO)
+ * Desafio Código da Ilha – Edição Free Fire (NÍVEL AVENTUREIRO)
  * Linguagem: C
  *
  * Funcionalidades:
  * 1. Adicionar itens (Nome, Tipo, Quantidade)
  * 2. Remover itens (por Nome)
  * 3. Listar itens
- * 4. Menu interativo com vetor estático (MAX 10).
+ * 4. Buscar item por nome (Busca Sequencial)
  * ---------------------------------------------------------------------
  */
 
@@ -15,6 +15,7 @@
 #include <stdio.h>   // Para entrada e saída (printf, scanf)
 #include <stdlib.h>  // Para funções utilitárias (system, exit)
 #include <string.h>  // Para manipulação de strings (strcmp, strcpy)
+#include <stdbool.h> // NOVO! Para usar o tipo 'bool' (true, false)
 
 // --- 2. Constantes e Estruturas ---
 
@@ -31,9 +32,7 @@ struct Item
 };
 
 // --- 3. Variáveis Globais ---
-// O 'inventário' em si é um vetor da nossa struct
 struct Item mochila[MAX_ITENS];
-// Controla quantos itens estão ATUALMENTE na mochila
 int numItens = 0;
 
 // --- 4. Protótipos de Funções ---
@@ -51,12 +50,14 @@ void adicionarItem();
 void removerItem();
 void listarItens();
 
+// (Nível Aventureiro)
+void buscarSequencial();
+
 // --- 5. Função Principal (main) ---
 int main()
 {
     int opcao = 0;
 
-    // Loop principal do menu (Nível Novato)
     do
     {
         limparTela();
@@ -77,6 +78,13 @@ int main()
             printf("### 3. Listar Itens ###\n\n");
             listarItens();
             break;
+        
+        // Case para a busca sequencial
+        case 4:
+            printf("### 4. Buscar Item (Sequencial) ###\n\n");
+            buscarSequencial();
+            break;
+
         case 0:
             printf("\nSaindo do programa... Ate mais!\n");
             break;
@@ -95,11 +103,8 @@ int main()
     return 0;
 }
 
-// --- 6. Implementação das Funções ---
+// --- 6. Implementação das Funções de Utilidade ---
 
-/**
- * @brief Limpa o buffer de entrada (stdin).
- */
 void limparBuffer()
 {
     int c;
@@ -107,9 +112,6 @@ void limparBuffer()
         ;
 }
 
-/**
- * @brief Limpa o terminal (multiplataforma).
- */
 void limparTela()
 {
 #ifdef _WIN32
@@ -119,14 +121,11 @@ void limparTela()
 #endif
 }
 
-/**
- * @brief Pausa a execução até o usuário pressionar Enter.
- */
 void pausarSistema()
 {
     printf("\nPressione Enter para continuar...");
-    limparBuffer(); // Limpa qualquer entrada anterior
-    getchar();      // Espera o Enter
+    limparBuffer();
+    getchar();
 }
 
 /**
@@ -134,36 +133,33 @@ void pausarSistema()
  */
 void exibirMenu()
 {
-    printf("======================================\n");
-    printf(" MOCHILA DE SOBREVIVENCIA (v. Novato)\n");
-    printf("======================================\n");
+    printf("=========================================\n");
+    printf(" MOCHILA DE SOBREVIVENCIA (v. Aventureiro)\n");
+    printf("=========================================\n");
     printf("Itens na mochila: %d / %d\n", numItens, MAX_ITENS);
-    printf("--------------------------------------\n");
+    printf("-----------------------------------------\n");
     printf(" [1] Adicionar Item\n");
     printf(" [2] Remover Item\n");
     printf(" [3] Listar Itens\n");
+    printf(" [4] Buscar Item (Sequencial)\n");
     printf(" [0] Sair do Programa\n");
-    printf("--------------------------------------\n");
+    printf("-----------------------------------------\n");
 }
 
-/**
- * @brief Lê e retorna a opção do usuário (um inteiro).
- */
 int obterOpcao()
 {
     int opcao = -1;
     printf("Escolha sua acao: ");
     if (scanf("%d", &opcao) != 1)
     {
-        opcao = -1; // Define como opção inválida
+        opcao = -1;
     }
-    limparBuffer(); // Limpa o \n ou entrada inválida
+    limparBuffer();
     return opcao;
 }
 
-/**
- * @brief (NÍVEL NOVATO) Adiciona um novo item à mochila.
- */
+// --- 7. Funções do Nível Novato ---
+
 void adicionarItem()
 {
     if (numItens >= MAX_ITENS)
@@ -171,18 +167,15 @@ void adicionarItem()
         printf("Erro: A mochila esta cheia! (Max: %d itens)\n", MAX_ITENS);
         return;
     }
-
-    // Pega o item atual (o próximo índice livre)
     struct Item *novoItem = &mochila[numItens];
 
-    // Leitura dos dados
     printf("Nome do item: ");
     fgets(novoItem->nome, MAX_NOME, stdin);
-    novoItem->nome[strcspn(novoItem->nome, "\n")] = 0; // Remove o \n
+    novoItem->nome[strcspn(novoItem->nome, "\n")] = 0;
 
     printf("Tipo do item (ex: Arma, Municao, Cura): ");
     fgets(novoItem->tipo, MAX_NOME, stdin);
-    novoItem->tipo[strcspn(novoItem->tipo, "\n")] = 0; // Remove o \n
+    novoItem->tipo[strcspn(novoItem->tipo, "\n")] = 0;
 
     printf("Quantidade: ");
     while (scanf("%d", &novoItem->quantidade) != 1 || novoItem->quantidade <= 0)
@@ -192,15 +185,10 @@ void adicionarItem()
     }
     limparBuffer();
 
-    // Incrementa o contador de itens
     numItens++;
-
     printf("\nSucesso: Item '%s' (x%d) adicionado a mochila!\n", novoItem->nome, novoItem->quantidade);
 }
 
-/**
- * @brief (NÍVEL NOVATO) Remove um item da mochila pelo nome.
- */
 void removerItem()
 {
     if (numItens == 0)
@@ -208,15 +196,13 @@ void removerItem()
         printf("A mochila ja esta vazia.\n");
         return;
     }
-
     char nomeParaRemover[MAX_NOME];
     printf("Nome do item a remover: ");
     fgets(nomeParaRemover, MAX_NOME, stdin);
-    nomeParaRemover[strcspn(nomeParaRemover, "\n")] = 0; // Remove o \n
+    nomeParaRemover[strcspn(nomeParaRemover, "\n")] = 0;
 
     int indiceEncontrado = -1;
 
-    // 1. Encontra o índice do item
     for (int i = 0; i < numItens; i++)
     {
         if (strcmp(mochila[i].nome, nomeParaRemover) == 0)
@@ -232,23 +218,15 @@ void removerItem()
     }
     else
     {
-        // 2. "Puxa" todos os itens seguintes para a esquerda
-        // (Sobrescreve o item removido)
         for (int i = indiceEncontrado; i < numItens - 1; i++)
         {
             mochila[i] = mochila[i + 1];
         }
-
-        // 3. Decrementa o número de itens
         numItens--;
-
         printf("\nSucesso: Item '%s' removido da mochila.\n", nomeParaRemover);
     }
 }
 
-/**
- * @brief (NÍVEL NOVATO) Lista todos os itens da mochila em formato de tabela.
- */
 void listarItens()
 {
     if (numItens == 0)
@@ -256,14 +234,9 @@ void listarItens()
         printf("A mochila esta vazia. Hora de procurar loot!\n");
         return;
     }
-
-    // Cabeçalho da tabela
     printf("-----------------------------------------------------------------\n");
-    // Formatação: -25s = 25 chars para string, alinhado à esquerda
     printf("| %-25s | %-20s | %-10s |\n", "NOME", "TIPO", "QTD.");
     printf("=================================================================\n");
-
-    // Lista os itens
     for (int i = 0; i < numItens; i++)
     {
         printf("| %-25s | %-20s | %-10d |\n",
@@ -272,4 +245,54 @@ void listarItens()
                mochila[i].quantidade);
     }
     printf("-----------------------------------------------------------------\n");
+}
+
+// --- 8. Função do Nível Aventureiro ---
+
+/**
+ * @brief (NÍVEL AVENTUREIRO) Busca um item pelo nome (Busca Sequencial).
+ */
+void buscarSequencial()
+{
+    if (numItens == 0)
+    {
+        printf("A mochila esta vazia.\n");
+        return;
+    }
+
+    char nomeParaBuscar[MAX_NOME];
+    printf("Nome do item a buscar: ");
+    fgets(nomeParaBuscar, MAX_NOME, stdin);
+    nomeParaBuscar[strcspn(nomeParaBuscar, "\n")] = 0; // Remove o \n
+
+    // Flag para controlar se o item foi achado
+    bool encontrado = false;
+    int comparacoes = 0;
+
+    // Loop sequencial (do início ao fim)
+    for (int i = 0; i < numItens; i++)
+    {
+        comparacoes++; // Conta cada comparação
+        
+        // strcmp retorna 0 se as strings forem iguais
+        if (strcmp(mochila[i].nome, nomeParaBuscar) == 0)
+        {
+            printf("\n--- Item Encontrado! ---\n");
+            printf("Nome: %s\n", mochila[i].nome);
+            printf("Tipo: %s\n", mochila[i].tipo);
+            printf("Qtd.: %d\n", mochila[i].quantidade);
+            printf("------------------------\n");
+            printf("(Encontrado em %d comparacoes)\n", comparacoes);
+
+            encontrado = true;
+            break; // Para o loop assim que encontrar
+        }
+    }
+
+    // Se o loop terminar e a flag for falsa, não achou
+    if (!encontrado)
+    {
+        printf("\nErro: Item '%s' nao foi encontrado na mochila.\n", nomeParaBuscar);
+        printf("(Busca sequencial realizou %d comparacoes)\n", comparacoes);
+    }
 }
